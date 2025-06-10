@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .quiz-container, .result-container {
+      background: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .wrong {
+      background-color: #f44336;
+      color: white;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    #timer {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    #nextBtn, #submitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #submitBtn {
+      display: none;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #questionProgress {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizBox">
+    <h2>Quiz App</h2>
+    <div id="timer">⏳ Time Left: 45m 0s</div>
+    <div id="questionProgress"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+  </div>
+
+  <div class="result-container" id="resultBox" style="display:none;">
+    <h2>Quiz Result</h2>
+    <canvas id="resultChart"></canvas>
+    <div id="finalTime"></div>
+  </div>
+
+  <script>
+    const totalTime = 2700; // 45 minutes
+    let remainingTime = totalTime;
+
+    const questions = [
+       
+  {
+    question: "What is the brain of the computer?",
+    options: ["RAM", "CPU", "Hard Disk", "Monitor"],
+    answer: "CPU"
+  },
+  {
+    question: "Which device is used to input data into a computer?",
+    options: ["Monitor", "Printer", "Keyboard", "Speaker"],
+    answer: "Keyboard"
+  },
+  {
+    question: "What does RAM stand for?",
+    options: ["Readily Available Memory", "Random Access Memory", "Run Access Memory", "Read Access Memory"],
+    answer: "Random Access Memory"
+  },
+  {
+    question: "Which of the following is an output device?",
+    options: ["Scanner", "Mouse", "Printer", "Keyboard"],
+    answer: "Printer"
+  },
+  {
+    question: "What is the full form of USB?",
+    options: ["Universal Serial Bus", "Unified Serial Bus", "Universal Service Bus", "United Serial Bus"],
+    answer: "Universal Serial Bus"
+  },
+  {
+    question: "Which part of the computer is used for permanent data storage?",
+    options: ["RAM", "Hard Disk", "CPU", "Cache"],
+    answer: "Hard Disk"
+  },
+  {
+    question: "What is the purpose of an operating system?",
+    options: ["To compile programs", "To manage hardware and software resources", "To browse the internet", "To write documents"],
+    answer: "To manage hardware and software resources"
+  },
+  {
+    question: "Which one is an example of an operating system?",
+    options: ["Microsoft Word", "Windows 10", "Adobe Photoshop", "Google Chrome"],
+    answer: "Windows 10"
+  },
+  {
+    question: "What is software?",
+    options: ["Physical parts of a computer", "Instructions that tell a computer what to do", "A type of hardware", "A data storage device"],
+    answer: "Instructions that tell a computer what to do"
+  },
+  {
+    question: "What type of software is Microsoft Excel?",
+    options: ["Operating system", "Spreadsheet software", "Web browser", "Antivirus"],
+    answer: "Spreadsheet software"
+  },
+  {
+    question: "Which one is a non-volatile memory?",
+    options: ["RAM", "Cache", "ROM", "Register"],
+    answer: "ROM"
+  },
+  {
+    question: "What does CPU stand for?",
+    options: ["Central Processing Unit", "Computer Personal Unit", "Central Peripheral Unit", "Control Processing Unit"],
+    answer: "Central Processing Unit"
+  },
+  {
+    question: "Which device is used to display output from a computer?",
+    options: ["Monitor", "Keyboard", "Scanner", "Microphone"],
+    answer: "Monitor"
+  },
+  {
+    question: "What does GUI stand for?",
+    options: ["General User Interface", "Graphical User Interface", "General Utility Interface", "Graphical Utility Interface"],
+    answer: "Graphical User Interface"
+  },
+  {
+    question: "Which language is closest to machine language?",
+    options: ["Assembly language", "High-level language", "Low-level language", "Natural language"],
+    answer: "Low-level language"
+  },
+  {
+    question: "Which of the following is NOT an input device?",
+    options: ["Mouse", "Scanner", "Printer", "Microphone"],
+    answer: "Printer"
+  },
+  {
+    question: "What is the primary function of ALU in CPU?",
+    options: ["Control instructions", "Perform arithmetic and logic operations", "Store data", "Manage memory"],
+    answer: "Perform arithmetic and logic operations"
+  },
+  {
+    question: "Which memory is used by the CPU to store frequently used instructions?",
+    options: ["Cache memory", "Hard disk", "RAM", "ROM"],
+    answer: "Cache memory"
+  },
+  {
+    question: "Which one is considered volatile memory?",
+    options: ["ROM", "Hard Disk", "RAM", "Flash drive"],
+    answer: "RAM"
+  },
+  {
+    question: "What is the extension of a Microsoft Word file?",
+    options: [".xls", ".docx", ".ppt", ".pdf"],
+    answer: ".docx"
+  },
+  {
+    question: "Which key is used to delete one character to the right of the cursor?",
+    options: ["Backspace", "Delete", "Enter", "Escape"],
+    answer: "Delete"
+  },
+  {
+    question: "Which device converts digital signals into analog signals?",
+    options: ["Modem", "Router", "Switch", "Hub"],
+    answer: "Modem"
+  },
+  {
+    question: "Which of these is NOT a type of computer?",
+    options: ["Supercomputer", "Mainframe", "Smartphone", "Calculator"],
+    answer: "Calculator"
+  },
+  {
+    question: "What is an IP address?",
+    options: ["Internet Protocol address", "Internal Processing address", "Internet Provider address", "Internal Protocol address"],
+    answer: "Internet Protocol address"
+  },
+  {
+    question: "Which one is a programming language?",
+    options: ["HTML", "CSS", "Python", "SQL"],
+    answer: "Python"
+  },
+  {
+    question: "What does HTTP stand for?",
+    options: ["Hypertext Transfer Protocol", "Hyperlink Transfer Protocol", "Hypertext Transmission Protocol", "Hyperlink Transmission Protocol"],
+    answer: "Hypertext Transfer Protocol"
+  },
+  {
+    question: "Which device connects multiple computers in a network?",
+    options: ["Printer", "Router", "Monitor", "Keyboard"],
+    answer: "Router"
+  },
+  {
+    question: "What does BIOS stand for?",
+    options: ["Basic Input Output System", "Binary Input Output System", "Basic Internal Output System", "Binary Internal Output System"],
+    answer: "Basic Input Output System"
+  },
+  {
+    question: "Which software helps to detect and remove viruses?",
+    options: ["Word Processor", "Antivirus", "Spreadsheet", "Browser"],
+    answer: "Antivirus"
+  },
+  {
+    question: "What is a firewall used for?",
+    options: ["To store files", "To block unauthorized access", "To speed up the internet", "To scan viruses"],
+    answer: "To block unauthorized access"
+  },
+  {
+    question: "Which key combination is used to copy selected text?",
+    options: ["Ctrl + X", "Ctrl + C", "Ctrl + V", "Ctrl + Z"],
+    answer: "Ctrl + C"
+  },
+  {
+    question: "Which device stores data permanently?",
+    options: ["RAM", "ROM", "Hard Disk Drive", "Cache"],
+    answer: "Hard Disk Drive"
+  },
+  {
+    question: "Which of these is NOT an example of application software?",
+    options: ["MS Word", "Windows OS", "Adobe Photoshop", "VLC Media Player"],
+    answer: "Windows OS"
+  },
+  {
+    question: "Which file format is used to compress files?",
+    options: [".exe", ".zip", ".doc", ".txt"],
+    answer: ".zip"
+  },
+  {
+    question: "Which part of the computer reads data and instructions from memory?",
+    options: ["ALU", "Control Unit", "Input Unit", "Output Unit"],
+    answer: "Control Unit"
+  },
+  {
+    question: "What is the main function of a compiler?",
+    options: ["To execute programs", "To translate source code into machine code", "To edit code", "To debug errors"],
+    answer: "To translate source code into machine code"
+  },
+  {
+    question: "What is the shortcut key to save a document in most software?",
+    options: ["Ctrl + P", "Ctrl + S", "Ctrl + V", "Ctrl + X"],
+    answer: "Ctrl + S"
+  },
+  {
+    question: "What is the maximum number of characters a byte can hold?",
+    options: ["4", "8", "1", "256"],
+    answer: "1"
+  },
+  {
+    question: "Which of the following is used to uniquely identify a web page?",
+    options: ["URL", "IP address", "DNS", "FTP"],
+    answer: "URL"
+  },
+  {
+    question: "Which of these is NOT a computer programming paradigm?",
+    options: ["Procedural", "Object-oriented", "Declarative", "Mechanical"],
+    answer: "Mechanical"
+  },
+  {
+    question: "Which key is used to switch between open applications in Windows?",
+    options: ["Alt + Tab", "Ctrl + Alt + Del", "Ctrl + Tab", "Shift + Tab"],
+    answer: "Alt + Tab"
+  },
+  {
+    question: "What does DNS stand for?",
+    options: ["Domain Name Server", "Domain Name System", "Direct Name Server", "Direct Name System"],
+    answer: "Domain Name System"
+  },
+  {
+    question: "Which of the following is NOT a search engine?",
+    options: ["Google", "Bing", "Yahoo", "HTML"],
+    answer: "HTML"
+  },
+  {
+    question: "Which device is used to scan documents?",
+    options: ["Printer", "Scanner", "Monitor", "Mouse"],
+    answer: "Scanner"
+  },
+  {
+    question: "Which of the following is NOT a cloud storage service?",
+    options: ["Google Drive", "Dropbox", "OneDrive", "Adobe Photoshop"],
+    answer: "Adobe Photoshop"
+  },
+  {
+    question: "What type of memory is cache?",
+    options: ["Volatile memory", "Non-volatile memory", "External memory", "Permanent memory"],
+    answer: "Volatile memory"
+  },
+  {
+    question: "What does HTTP use to secure communication over the web?",
+    options: ["SSL/TLS", "FTP", "IP", "DNS"],
+    answer: "SSL/TLS"
+  },
+  {
+    question: "What is the full form of PDF?",
+    options: ["Portable Document Format", "Public Document Format", "Personal Document File", "Portable Data File"],
+    answer: "Portable Document Format"
+  },
+  {
+    question: "Which of the following is NOT an operating system?",
+    options: ["Linux", "Android", "Oracle", "MacOS"],
+    answer: "Oracle"
+  },
+  {
+    question: "Which key is used to undo an action?",
+    options: ["Ctrl + Z", "Ctrl + Y", "Ctrl + X", "Ctrl + C"],
+    answer: "Ctrl + Z"
+  }
+
+  ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    let timer = 0;
+    let interval;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const timerEl = document.getElementById('timer');
+    const questionProgress = document.getElementById('questionProgress');
+
+    function startTimer() {
+      interval = setInterval(() => {
+        remainingTime--;
+        timer++;
+        const min = Math.floor(remainingTime / 60);
+        const sec = remainingTime % 60;
+        timerEl.innerText = `⏳ Time Left: ${min}m ${sec}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(interval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const current = questions[currentIndex];
+      questionEl.innerText = `Q${currentIndex + 1}: ${current.question}`;
+      questionProgress.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+      optionsEl.innerHTML = '';
+
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, current.answer, opt);
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.style.display = (currentIndex < questions.length - 1) ? 'inline-block' : 'none';
+      submitBtn.style.display = (currentIndex === questions.length - 1) ? 'inline-block' : 'none';
+    }
+
+    function selectOption(btn, correctAnswer, selected) {
+      const allBtns = optionsEl.querySelectorAll('button');
+      allBtns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.innerText === correctAnswer) b.classList.add('correct');
+      });
+
+      if (selected === correctAnswer) {
+        correctCount++;
+        btn.classList.add('correct');
+      } else {
+        wrongCount++;
+        btn.classList.add('wrong');
+      }
+
+      userAnswers[currentIndex] = selected;
+    }
+
+    function nextQuestion() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        loadQuestion();
+      }
+    }
+
+    function calculateScore() {
+      const negative = wrongCount * 0.2;
+      const rawScore = correctCount - negative;
+      return rawScore < 0 ? 0 : rawScore;
+    }
+
+    function submitQuiz() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered && currentIndex === questions.length - 1) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      clearInterval(interval);
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('resultBox').style.display = 'block';
+
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      const status = percentage >= 40 ? "✅ Pass" : "❌ Fail";
+
+      document.getElementById('finalTime').innerHTML = `
+        <p>🟢 Correct: ${correctCount}</p>
+        <p>🔴 Wrong: ${wrongCount}</p>
+        <p>⚪ Skipped: ${skippedCount}</p>
+        <p>📊 Total Score: ${score.toFixed(2)} / ${questions.length}</p>
+        <p>🎯 Result: <strong>${status}</strong></p>
+        <p>⏱️ Time Taken: ${Math.floor(timer / 60)}m ${timer % 60}s</p>
+      `;
+
+      showResultChart();
+      showQuestionReview();
+    }
+
+ function showResultChart() {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  const total = correctCount + wrongCount + skippedCount;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Wrong', 'Skipped'],
+      datasets: [{
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.9)',     // Green
+          'rgba(244, 67, 54, 0.9)',     // Red
+          'rgba(255, 193, 7, 0.9)'      // Yellow
+        ],
+        borderColor: '#f4f4f4',
+        borderWidth: 6,
+        borderRadius: 15,
+        hoverOffset: 10,
+        spacing: 5
+      }]
+    },
+    options: {
+      cutout: '40%',
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 14 }
+          }
+        },
+        datalabels: {
+          color: '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const data = ctx.chart.data.datasets[0].data;
+            const total = data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
+    function showQuestionReview() {
+      const reviewContainer = document.createElement('div');
+      reviewContainer.innerHTML = `<h3>📝 Question Review</h3>`;
+      questions.forEach((q, index) => {
+        const userAns = userAnswers[index];
+        const correct = q.answer;
+
+        const qDiv = document.createElement('div');
+        qDiv.style.marginBottom = '20px';
+        qDiv.innerHTML = `<strong>Q${index + 1}:</strong> ${q.question}`;
+
+        q.options.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.style.padding = '6px';
+          optDiv.style.borderRadius = '5px';
+          optDiv.style.margin = '4px 0';
+
+          if (opt === correct) {
+            optDiv.style.backgroundColor = '#d4edda';
+            optDiv.style.color = '#155724';
+          }
+
+          if (userAns === opt && opt !== correct) {
+            optDiv.style.backgroundColor = '#f8d7da';
+            optDiv.style.color = '#721c24';
+          }
+
+          optDiv.innerText = opt;
+          qDiv.appendChild(optDiv);
+        });
+
+        reviewContainer.appendChild(qDiv);
+      });
+
+      document.getElementById('resultBox').appendChild(reviewContainer);
+    }
+
+    // Initialize
+    startTimer();
+    loadQuestion();
+  </script>
+</body>
+</html>
