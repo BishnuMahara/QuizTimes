@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .quiz-container, .result-container {
+      background: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .wrong {
+      background-color: #f44336;
+      color: white;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    #timer {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    #nextBtn, #submitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #submitBtn {
+      display: none;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #questionProgress {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizBox">
+    <h2>Quiz App</h2>
+    <div id="timer">⏳ Time Left: 45m 0s</div>
+    <div id="questionProgress"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+  </div>
+
+  <div class="result-container" id="resultBox" style="display:none;">
+    <h2>Quiz Result</h2>
+    <canvas id="resultChart"></canvas>
+    <div id="finalTime"></div>
+  </div>
+
+  <script>
+    const totalTime = 2700; // 45 minutes
+    let remainingTime = totalTime;
+
+    const questions = [
+
+    
+    
+  {
+    "question": "What is the primary function of an operating system?",
+    "options": [
+      "To design hardware",
+      "To manage computer resources and provide a user interface",
+      "To create software applications",
+      "To store data permanently"
+    ],
+    "answer": "To manage computer resources and provide a user interface"
+  },
+  {
+    "question": "Which of the following is an example of I/O devices?",
+    "options": [
+      "CPU",
+      "Printer",
+      "RAM",
+      "Motherboard"
+    ],
+    "answer": "Printer"
+  },
+  {
+    "question": "What does I/O software primarily handle?",
+    "options": [
+      "Network configuration",
+      "Input and output operations",
+      "File compression",
+      "System security"
+    ],
+    "answer": "Input and output operations"
+  },
+  {
+    "question": "Which of the following is a key aspect of file and directory organization?",
+    "options": [
+      "Hardware design",
+      "Hierarchical structure",
+      "Network speed",
+      "Display resolution"
+    ],
+    "answer": "Hierarchical structure"
+  },
+  {
+    "question": "What is a common file system implementation technique?",
+    "options": [
+      "Random access memory",
+      "Indexed allocation",
+      "Graphic design",
+      "User authentication"
+    ],
+    "answer": "Indexed allocation"
+  },
+  {
+    "question": "Which operating system is part of the Windows Family of Products?",
+    "options": [
+      "Ubuntu",
+      "Windows 10",
+      "Fedora",
+      "macOS"
+    ],
+    "answer": "Windows 10"
+  },
+  {
+    "question": "What is a key step in the installation of an operating system?",
+    "options": [
+      "Configuring a printer",
+      "Partitioning the hard disk",
+      "Designing a website",
+      "Installing a game"
+    ],
+    "answer": "Partitioning the hard disk"
+  },
+  {
+    "question": "Which operating system is known for its open-source nature?",
+    "options": [
+      "MS-DOS",
+      "Linux",
+      "Windows XP",
+      "macOS"
+    ],
+    "answer": "Linux"
+  },
+  {
+    "question": "What is a common recovery method for operating systems?",
+    "options": [
+      "System restore",
+      "Changing the monitor",
+      "Upgrading the CPU",
+      "Installing new software"
+    ],
+    "answer": "System restore"
+  },
+  {
+    "question": "Which of the following is a feature of the Unix Family of Products?",
+    "options": [
+      "Closed-source code",
+      "Multi-user capability",
+      "Single-tasking",
+      "Limited file support"
+    ],
+    "answer": "Multi-user capability"
+  },
+  {
+    "question": "What does networking in Windows involve?",
+    "options": [
+      "Managing hardware components",
+      "Connecting to other computers or devices",
+      "Creating graphic designs",
+      "Optimizing CPU performance"
+    ],
+    "answer": "Connecting to other computers or devices"
+  },
+  {
+    "question": "Which architecture is commonly associated with Linux?",
+    "options": [
+      "Monolithic kernel",
+      "Microprocessor design",
+      "Graphic user interface",
+      "Database management"
+    ],
+    "answer": "Monolithic kernel"
+  },
+  {
+    "question": "What is a key aspect of troubleshooting Windows?",
+    "options": [
+      "Adjusting screen brightness",
+      "Diagnosing and fixing system issues",
+      "Installing new games",
+      "Designing network layouts"
+    ],
+    "answer": "Diagnosing and fixing system issues"
+  },
+  {
+    "question": "What does managing network printing involve?",
+    "options": [
+      "Configuring printers over a network",
+      "Designing new hardware",
+      "Creating user accounts",
+      "Optimizing video playback"
+    ],
+    "answer": "Configuring printers over a network"
+  },
+  {
+    "question": "Which of the following is managed in Linux permissions?",
+    "options": [
+      "Screen resolution",
+      "File access rights",
+      "Network speed",
+      "Hardware temperature"
+    ],
+    "answer": "File access rights"
+  },
+  {
+    "question": "What is a common method for sharing a folder in Windows?",
+    "options": [
+      "Using a USB drive",
+      "Setting folder permissions",
+      "Changing the desktop wallpaper",
+      "Installing a new browser"
+    ],
+    "answer": "Setting folder permissions"
+  },
+  {
+    "question": "What is a primary concern in managing hard disks?",
+    "options": [
+      "Partitioning and formatting",
+      "Changing the monitor settings",
+      "Updating the software version",
+      "Designing a logo"
+    ],
+    "answer": "Partitioning and formatting"
+  },
+  {
+    "question": "Which operating system supports user groups effectively?",
+    "options": [
+      "MS-DOS",
+      "Linux",
+      "Windows",
+      "Both b and c"
+    ],
+    "answer": "Both b and c"
+  },
+  {
+    "question": "What is a key security threat to operating systems?",
+    "options": [
+      "Low battery",
+      "Malware",
+      "High resolution",
+      "Slow internet"
+    ],
+    "answer": "Malware"
+  },
+  {
+    "question": "How can security threats to operating systems be managed?",
+    "options": [
+      "By installing antivirus software",
+      "By increasing screen brightness",
+      "By changing the mouse settings",
+      "By updating the game files"
+    ],
+    "answer": "By installing antivirus software"
+  },
+  {
+    "question": "What is a common optimization technique for operating systems?",
+    "options": [
+      "Defragmenting the hard disk",
+      "Changing the desktop theme",
+      "Installing new fonts",
+      "Adjusting the speaker volume"
+    ],
+    "answer": "Defragmenting the hard disk"
+  },
+  {
+    "question": "Which of the following is a feature of MS-DOS?",
+    "options": [
+      "Graphical user interface",
+      "Command-line interface",
+      "Multi-touch support",
+      "Advanced networking"
+    ],
+    "answer": "Command-line interface"
+  },
+  {
+    "question": "What does the Linux architecture emphasize?",
+    "options": [
+      "Modularity and stability",
+      "High graphic performance",
+      "Single-user support",
+      "Limited file types"
+    ],
+    "answer": "Modularity and stability"
+  },
+  {
+    "question": "Which process is involved in Windows backup?",
+    "options": [
+      "Creating a system image",
+      "Changing the keyboard layout",
+      "Updating the monitor driver",
+      "Designing a webpage"
+    ],
+    "answer": "Creating a system image"
+  },
+  {
+    "question": "What is a key function of operating system security management?",
+    "options": [
+      "Protecting against unauthorized access",
+      "Enhancing video quality",
+      "Increasing storage capacity",
+      "Optimizing game performance"
+    ],
+    "answer": "Protecting against unauthorized access"
+  }
+
+
+
+
+
+    ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    let timer = 0;
+    let interval;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const timerEl = document.getElementById('timer');
+    const questionProgress = document.getElementById('questionProgress');
+
+    function startTimer() {
+      interval = setInterval(() => {
+        remainingTime--;
+        timer++;
+        const min = Math.floor(remainingTime / 60);
+        const sec = remainingTime % 60;
+        timerEl.innerText = `⏳ Time Left: ${min}m ${sec}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(interval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const current = questions[currentIndex];
+      questionEl.innerText = `Q${currentIndex + 1}: ${current.question}`;
+      questionProgress.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+      optionsEl.innerHTML = '';
+
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, current.answer, opt);
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.style.display = (currentIndex < questions.length - 1) ? 'inline-block' : 'none';
+      submitBtn.style.display = (currentIndex === questions.length - 1) ? 'inline-block' : 'none';
+    }
+
+    function selectOption(btn, correctAnswer, selected) {
+      const allBtns = optionsEl.querySelectorAll('button');
+      allBtns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.innerText === correctAnswer) b.classList.add('correct');
+      });
+
+      if (selected === correctAnswer) {
+        correctCount++;
+        btn.classList.add('correct');
+      } else {
+        wrongCount++;
+        btn.classList.add('wrong');
+      }
+
+      userAnswers[currentIndex] = selected;
+    }
+
+    function nextQuestion() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        loadQuestion();
+      }
+    }
+
+    function calculateScore() {
+      const negative = wrongCount * 0.2;
+      const rawScore = correctCount - negative;
+      return rawScore < 0 ? 0 : rawScore;
+    }
+
+    function submitQuiz() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered && currentIndex === questions.length - 1) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      clearInterval(interval);
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('resultBox').style.display = 'block';
+
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      const status = percentage >= 40 ? "✅ Pass" : "❌ Fail";
+
+      document.getElementById('finalTime').innerHTML = `
+        <p>🟢 Correct: ${correctCount}</p>
+        <p>🔴 Wrong: ${wrongCount}</p>
+        <p>⚪ Skipped: ${skippedCount}</p>
+        <p>📊 Total Score: ${score.toFixed(2)} / ${questions.length}</p>
+        <p>🎯 Result: <strong>${status}</strong></p>
+        <p>⏱️ Time Taken: ${Math.floor(timer / 60)}m ${timer % 60}s</p>
+      `;
+
+      showResultChart();
+      showQuestionReview();
+    }
+
+ function showResultChart() {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  const total = correctCount + wrongCount + skippedCount;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Wrong', 'Skipped'],
+      datasets: [{
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: [
+          'green',     // Green
+          'red',     // Red
+          'rgba(255, 193, 7, 1)'      // Yellow
+        ],
+        borderColor: '#f4f4f4',
+        borderWidth: 6,
+        borderRadius: 15,
+        hoverOffset: 10,
+        spacing: 5
+      }]
+    },
+    options: {
+      cutout: '40%',
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 14 }
+          }
+        },
+        datalabels: {
+          color: '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const data = ctx.chart.data.datasets[0].data;
+            const total = data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
+    function showQuestionReview() {
+      const reviewContainer = document.createElement('div');
+      reviewContainer.innerHTML = `<h3>📝 Question Review</h3>`;
+      questions.forEach((q, index) => {
+        const userAns = userAnswers[index];
+        const correct = q.answer;
+
+        const qDiv = document.createElement('div');
+        qDiv.style.marginBottom = '20px';
+        qDiv.innerHTML = `<strong>Q${index + 1}:</strong> ${q.question}`;
+
+        q.options.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.style.padding = '6px';
+          optDiv.style.borderRadius = '5px';
+          optDiv.style.margin = '4px 0';
+
+          if (opt === correct) {
+            optDiv.style.backgroundColor = '#d4edda';
+            optDiv.style.color = '#09da3a';
+          }
+
+          if (userAns === opt && opt !== correct) {
+            optDiv.style.backgroundColor = '#d1aaae';
+            optDiv.style.color = '#cf0d20';
+          }
+
+          optDiv.innerText = opt;
+          qDiv.appendChild(optDiv);
+        });
+
+        reviewContainer.appendChild(qDiv);
+      });
+
+      document.getElementById('resultBox').appendChild(reviewContainer);
+    }
+
+    // Initialize
+    startTimer();
+    loadQuestion();
+  </script>
+</body>
+</html>

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .quiz-container, .result-container {
+      background: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .wrong {
+      background-color: #f44336;
+      color: white;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    #timer {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    #nextBtn, #submitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #submitBtn {
+      display: none;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #questionProgress {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizBox">
+    <h2>Quiz App</h2>
+    <div id="timer">⏳ Time Left: 45m 0s</div>
+    <div id="questionProgress"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+  </div>
+
+  <div class="result-container" id="resultBox" style="display:none;">
+    <h2>Quiz Result</h2>
+    <canvas id="resultChart"></canvas>
+    <div id="finalTime"></div>
+  </div>
+
+  <script>
+    const totalTime = 2700; // 45 minutes
+    let remainingTime = totalTime;
+
+    const questions = [
+
+    
+    
+  {
+    "question": "What is a key purpose of the file system in an operating system?",
+    "options": [
+      "To manage hardware drivers",
+      "To organize and store data efficiently",
+      "To enhance network speed",
+      "To design user interfaces"
+    ],
+    "answer": "To organize and store data efficiently"
+  },
+  {
+    "question": "Which operating system is known for its robustness in networking?",
+    "options": [
+      "MS-DOS",
+      "Unix",
+      "Windows XP",
+      "macOS"
+    ],
+    "answer": "Unix"
+  },
+  {
+    "question": "What does disk management in Linux typically involve?",
+    "options": [
+      "Creating and formatting partitions",
+      "Adjusting display settings",
+      "Installing new games",
+      "Changing the mouse sensitivity"
+    ],
+    "answer": "Creating and formatting partitions"
+  },
+  {
+    "question": "Which security feature is commonly used in Windows?",
+    "options": [
+      "User Account Control (UAC)",
+      "High-speed internet",
+      "Advanced graphics support",
+      "Multi-touch capability"
+    ],
+    "answer": "User Account Control (UAC)"
+  },
+  {
+    "question": "What is a common step in troubleshooting Windows startup issues?",
+    "options": [
+      "Booting into Safe Mode",
+      "Changing the desktop background",
+      "Updating the audio driver",
+      "Optimizing video playback"
+    ],
+    "answer": "Booting into Safe Mode"
+  },
+  {
+    "question": "Which operating system is primarily used for legacy applications?",
+    "options": [
+      "Windows 11",
+      "MS-DOS",
+      "Ubuntu",
+      "macOS"
+    ],
+    "answer": "MS-DOS"
+  },
+  {
+    "question": "What is a key component of managing users in Unix?",
+    "options": [
+      "Setting up user roles and permissions",
+      "Changing the screen resolution",
+      "Installing a new browser",
+      "Designing a webpage"
+    ],
+    "answer": "Setting up user roles and permissions"
+  },
+  {
+    "question": "Which of the following is a file system used by Linux?",
+    "options": [
+      "FAT32",
+      "NTFS",
+      "ext4",
+      "HFS+"
+    ],
+    "answer": "ext4"
+  },
+  {
+    "question": "What is involved in network troubleshooting in Windows?",
+    "options": [
+      "Checking IP configurations",
+      "Adjusting speaker volume",
+      "Changing the monitor settings",
+      "Installing new software"
+    ],
+    "answer": "Checking IP configurations"
+  },
+  {
+    "question": "Which process is used to share files in a Linux network?",
+    "options": [
+      "Using Samba for file sharing",
+      "Changing the desktop theme",
+      "Updating the graphics driver",
+      "Designing a network layout"
+    ],
+    "answer": "Using Samba for file sharing"
+  },
+  {
+    "question": "What is a common backup method for Windows systems?",
+    "options": [
+      "Using an external USB drive",
+      "Changing the keyboard layout",
+      "Increasing RAM capacity",
+      "Optimizing game performance"
+    ],
+    "answer": "Using an external USB drive"
+  },
+  {
+    "question": "Which of the following is a potential security threat to Linux?",
+    "options": [
+      "Hardware failure",
+      "Rootkit infections",
+      "Low battery",
+      "Slow processor"
+    ],
+    "answer": "Rootkit infections"
+  },
+  {
+    "question": "What does the Windows architecture rely on for process management?",
+    "options": [
+      "Kernel-level scheduling",
+      "High graphic performance",
+      "Limited memory support",
+      "Single-user access"
+    ],
+    "answer": "Kernel-level scheduling"
+  },
+  {
+    "question": "Which operating system family includes Solaris?",
+    "options": [
+      "Windows",
+      "Unix",
+      "Linux",
+      "MS-DOS"
+    ],
+    "answer": "Unix"
+  },
+  {
+    "question": "What is a key step in recovering a Linux system?",
+    "options": [
+      "Using a live CD to repair the system",
+      "Changing the monitor resolution",
+      "Updating the printer driver",
+      "Designing a network layout"
+    ],
+    "answer": "Using a live CD to repair the system"
+  },
+  {
+    "question": "Which of the following is a feature of Windows networking?",
+    "options": [
+      "Support for domain networks",
+      "Limited file sharing",
+      "Single-user access",
+      "No security features"
+    ],
+    "answer": "Support for domain networks"
+  },
+  {
+    "question": "What is involved in managing permissions in Windows?",
+    "options": [
+      "Setting access levels for files and folders",
+      "Installing a new game",
+      "Optimizing video quality",
+      "Changing the desktop background"
+    ],
+    "answer": "Setting access levels for files and folders"
+  },
+  {
+    "question": "Which tool is commonly used for disk management in Linux?",
+    "options": [
+      "fdisk",
+      "File Explorer",
+      "Task Manager",
+      "Device Manager"
+    ],
+    "answer": "fdisk"
+  },
+  {
+    "question": "What is a primary function of I/O devices in Unix?",
+    "options": [
+      "To process data internally",
+      "To handle input and output tasks",
+      "To design software applications",
+      "To store permanent data"
+    ],
+    "answer": "To handle input and output tasks"
+  },
+  {
+    "question": "Which operating system is widely used in cloud environments?",
+    "options": [
+      "Windows XP",
+      "Linux",
+      "MS-DOS",
+      "macOS"
+    ],
+    "answer": "Linux"
+  },
+  {
+    "question": "What does optimizing disk performance in Windows improve?",
+    "options": [
+      "System speed and efficiency",
+      "Screen brightness",
+      "Network design",
+      "Game graphics"
+    ],
+    "answer": "System speed and efficiency"
+  },
+  {
+    "question": "Which of the following is a common Linux troubleshooting step?",
+    "options": [
+      "Checking system logs with journalctl",
+      "Updating the monitor driver",
+      "Changing the mouse settings",
+      "Designing a logo"
+    ],
+    "answer": "Checking system logs with journalctl"
+  },
+  {
+    "question": "What is a key feature of MS-DOS file systems?",
+    "options": [
+      "Support for FAT16",
+      "Hierarchical directory structure",
+      "Advanced user permissions",
+      "Multi-user support"
+    ],
+    "answer": "Support for FAT16"
+  },
+  {
+    "question": "Which process ensures data security during a backup in Unix?",
+    "options": [
+      "Encrypting backup files",
+      "Changing the desktop theme",
+      "Installing new hardware",
+      "Optimizing internet speed"
+    ],
+    "answer": "Encrypting backup files"
+  },
+  {
+    "question": "What is a common method to manage security threats in Windows?",
+    "options": [
+      "Using Windows Defender",
+      "Changing the speaker volume",
+      "Designing a webpage",
+      "Increasing RAM"
+    ],
+    "answer": "Using Windows Defender"
+  }
+
+
+
+
+    ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    let timer = 0;
+    let interval;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const timerEl = document.getElementById('timer');
+    const questionProgress = document.getElementById('questionProgress');
+
+    function startTimer() {
+      interval = setInterval(() => {
+        remainingTime--;
+        timer++;
+        const min = Math.floor(remainingTime / 60);
+        const sec = remainingTime % 60;
+        timerEl.innerText = `⏳ Time Left: ${min}m ${sec}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(interval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const current = questions[currentIndex];
+      questionEl.innerText = `Q${currentIndex + 1}: ${current.question}`;
+      questionProgress.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+      optionsEl.innerHTML = '';
+
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, current.answer, opt);
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.style.display = (currentIndex < questions.length - 1) ? 'inline-block' : 'none';
+      submitBtn.style.display = (currentIndex === questions.length - 1) ? 'inline-block' : 'none';
+    }
+
+    function selectOption(btn, correctAnswer, selected) {
+      const allBtns = optionsEl.querySelectorAll('button');
+      allBtns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.innerText === correctAnswer) b.classList.add('correct');
+      });
+
+      if (selected === correctAnswer) {
+        correctCount++;
+        btn.classList.add('correct');
+      } else {
+        wrongCount++;
+        btn.classList.add('wrong');
+      }
+
+      userAnswers[currentIndex] = selected;
+    }
+
+    function nextQuestion() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        loadQuestion();
+      }
+    }
+
+    function calculateScore() {
+      const negative = wrongCount * 0.2;
+      const rawScore = correctCount - negative;
+      return rawScore < 0 ? 0 : rawScore;
+    }
+
+    function submitQuiz() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered && currentIndex === questions.length - 1) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      clearInterval(interval);
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('resultBox').style.display = 'block';
+
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      const status = percentage >= 40 ? "✅ Pass" : "❌ Fail";
+
+      document.getElementById('finalTime').innerHTML = `
+        <p>🟢 Correct: ${correctCount}</p>
+        <p>🔴 Wrong: ${wrongCount}</p>
+        <p>⚪ Skipped: ${skippedCount}</p>
+        <p>📊 Total Score: ${score.toFixed(2)} / ${questions.length}</p>
+        <p>🎯 Result: <strong>${status}</strong></p>
+        <p>⏱️ Time Taken: ${Math.floor(timer / 60)}m ${timer % 60}s</p>
+      `;
+
+      showResultChart();
+      showQuestionReview();
+    }
+
+ function showResultChart() {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  const total = correctCount + wrongCount + skippedCount;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Wrong', 'Skipped'],
+      datasets: [{
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: [
+          'green',     // Green
+          'red',     // Red
+          'rgba(255, 193, 7, 1)'      // Yellow
+        ],
+        borderColor: '#f4f4f4',
+        borderWidth: 6,
+        borderRadius: 15,
+        hoverOffset: 10,
+        spacing: 5
+      }]
+    },
+    options: {
+      cutout: '40%',
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 14 }
+          }
+        },
+        datalabels: {
+          color: '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const data = ctx.chart.data.datasets[0].data;
+            const total = data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
+    function showQuestionReview() {
+      const reviewContainer = document.createElement('div');
+      reviewContainer.innerHTML = `<h3>📝 Question Review</h3>`;
+      questions.forEach((q, index) => {
+        const userAns = userAnswers[index];
+        const correct = q.answer;
+
+        const qDiv = document.createElement('div');
+        qDiv.style.marginBottom = '20px';
+        qDiv.innerHTML = `<strong>Q${index + 1}:</strong> ${q.question}`;
+
+        q.options.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.style.padding = '6px';
+          optDiv.style.borderRadius = '5px';
+          optDiv.style.margin = '4px 0';
+
+          if (opt === correct) {
+            optDiv.style.backgroundColor = '#d4edda';
+            optDiv.style.color = '#09da3a';
+          }
+
+          if (userAns === opt && opt !== correct) {
+            optDiv.style.backgroundColor = '#d1aaae';
+            optDiv.style.color = '#cf0d20';
+          }
+
+          optDiv.innerText = opt;
+          qDiv.appendChild(optDiv);
+        });
+
+        reviewContainer.appendChild(qDiv);
+      });
+
+      document.getElementById('resultBox').appendChild(reviewContainer);
+    }
+
+    // Initialize
+    startTimer();
+    loadQuestion();
+  </script>
+</body>
+</html>
