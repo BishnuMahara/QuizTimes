@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .quiz-container, .result-container {
+      background: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .wrong {
+      background-color: #f44336;
+      color: white;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    #timer {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    #nextBtn, #submitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #submitBtn {
+      display: none;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #questionProgress {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizBox">
+    <h2>Quiz App</h2>
+    <div id="timer">⏳ Time Left: 45m 0s</div>
+    <div id="questionProgress"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+  </div>
+
+  <div class="result-container" id="resultBox" style="display:none;">
+    <h2>Quiz Result</h2>
+    <canvas id="resultChart"></canvas>
+    <div id="finalTime"></div>
+  </div>
+
+  <script>
+    const totalTime = 2700; // 45 minutes
+    let remainingTime = totalTime;
+
+    const questions = [
+    
+    
+  {
+    "question": "What is the main difference between a vacuum tube and a semiconductor device?",
+    "options": [
+      "Vacuum tubes use gas for conduction",
+      "Semiconductors are made of solid materials",
+      "Vacuum tubes have lower power consumption",
+      "Semiconductors cannot amplify signals"
+    ],
+    "answer": "Semiconductors are made of solid materials"
+  },
+  {
+    "question": "Which component is used to limit current in a circuit?",
+    "options": [
+      "Zener diode",
+      "Resistor",
+      "LED",
+      "Bipolar junction transistor"
+    ],
+    "answer": "Resistor"
+  },
+  {
+    "question": "What is the primary function of a PN junction diode in forward bias?",
+    "options": [
+      "To block current",
+      "To allow current flow",
+      "To emit light",
+      "To regulate voltage"
+    ],
+    "answer": "To allow current flow"
+  },
+  {
+    "question": "In reverse bias, a PN junction diode:",
+    "options": [
+      "Conducts high current",
+      "Has a wide depletion region",
+      "Emits light",
+      "Reduces junction capacitance"
+    ],
+    "answer": "Has a wide depletion region"
+  },
+  {
+    "question": "What happens to a PN junction diode when temperature increases?",
+    "options": [
+      "Forward current decreases",
+      "Reverse current increases",
+      "Depletion region widens",
+      "Junction capacitance decreases"
+    ],
+    "answer": "Reverse current increases"
+  },
+  {
+    "question": "Which device is commonly used for voltage regulation?",
+    "options": [
+      "LED",
+      "Zener diode",
+      "Resistor",
+      "Capacitor"
+    ],
+    "answer": "Zener diode"
+  },
+  {
+    "question": "What is the working principle of a Light Emitting Diode (LED)?",
+    "options": [
+      "It emits light when reverse-biased",
+      "It converts light into electrical energy",
+      "It emits light when forward-biased",
+      "It blocks current in both directions"
+    ],
+    "answer": "It emits light when forward-biased"
+  },
+  {
+    "question": "A Bipolar Junction Transistor (BJT) has how many terminals?",
+    "options": [
+      "Two",
+      "Three",
+      "Four",
+      "One"
+    ],
+    "answer": "Three"
+  },
+  {
+    "question": "In a PN junction diode, junction capacitance is affected by:",
+    "options": [
+      "Forward bias only",
+      "Reverse bias voltage",
+      "Temperature only",
+      "Light intensity"
+    ],
+    "answer": "Reverse bias voltage"
+  },
+  {
+    "question": "What is the effect of reverse biasing on a PN junction diode?",
+    "options": [
+      "Increases current flow",
+      "Decreases depletion region",
+      "Increases depletion region",
+      "Emits light"
+    ],
+    "answer": "Increases depletion region"
+  },
+  {
+    "question": "Which of the following is a characteristic of a Zener diode?",
+    "options": [
+      "It emits light in forward bias",
+      "It conducts in reverse bias beyond a certain voltage",
+      "It blocks current in both directions",
+      "It amplifies signals"
+    ],
+    "answer": "It conducts in reverse bias beyond a certain voltage"
+  },
+  {
+    "question": "The construction of a pnp transistor includes:",
+    "options": [
+      "Two n-type and one p-type layers",
+      "One n-type and two p-type layers",
+      "Only p-type material",
+      "Only n-type material"
+    ],
+    "answer": "One n-type and two p-type layers"
+  },
+  {
+    "question": "What is the primary use of a transistor in an integrated circuit?",
+    "options": [
+      "To store charge",
+      "To amplify or switch signals",
+      "To emit light",
+      "To regulate voltage"
+    ],
+    "answer": "To amplify or switch signals"
+  },
+  {
+    "question": "In an npn transistor, the base is made of:",
+    "options": [
+      "n-type material",
+      "p-type material",
+      "Insulating material",
+      "Conductive metal"
+    ],
+    "answer": "p-type material"
+  },
+  {
+    "question": "What is the effect of temperature on a PN junction diode’s reverse saturation current?",
+    "options": [
+      "It decreases",
+      "It remains constant",
+      "It increases",
+      "It becomes zero"
+    ],
+    "answer": "It increases"
+  },
+  {
+    "question": "Which of the following is a type of Field Effect Transistor (FET)?",
+    "options": [
+      "Zener diode",
+      "JFET",
+      "LED",
+      "Resistor"
+    ],
+    "answer": "JFET"
+  },
+  {
+    "question": "The working principle of a transistor as an amplifier depends on:",
+    "options": [
+      "Controlling voltage across the circuit",
+      "Controlling current through the base",
+      "Storing charge in the collector",
+      "Emitting light from the emitter"
+    ],
+    "answer": "Controlling current through the base"
+  },
+  {
+    "question": "What is the main difference between a JFET and a MOSFET?",
+    "options": [
+      "JFET has a gate insulated from the channel",
+      "MOSFET has a gate insulated from the channel",
+      "JFET uses a PN junction for control",
+      "MOSFET uses a PN junction for control"
+    ],
+    "answer": "MOSFET has a gate insulated from the channel"
+  },
+  {
+    "question": "In a MOSFET, the channel conductivity is controlled by:",
+    "options": [
+      "Base current",
+      "Gate voltage",
+      "Emitter voltage",
+      "Collector current"
+    ],
+    "answer": "Gate voltage"
+  },
+  {
+    "question": "Which type of transistor has a higher input impedance?",
+    "options": [
+      "Bipolar Junction Transistor (BJT)",
+      "Field Effect Transistor (FET)",
+      "Zener diode",
+      "Light Emitting Diode (LED)"
+    ],
+    "answer": "Field Effect Transistor (FET)"
+  },
+  {
+    "question": "What is the primary function of a resistor in a circuit?",
+    "options": [
+      "To amplify signals",
+      "To limit current",
+      "To store charge",
+      "To emit light"
+    ],
+    "answer": "To limit current"
+  },
+  {
+    "question": "In an integrated circuit, transistors are used for:",
+    "options": [
+      "Amplification and switching",
+      "Voltage regulation only",
+      "Light emission only",
+      "Charge storage only"
+    ],
+    "answer": "Amplification and switching"
+  },
+  {
+    "question": "What is the effect of forward bias on the depletion region of a PN junction diode?",
+    "options": [
+      "It increases",
+      "It decreases",
+      "It remains unchanged",
+      "It disappears completely"
+    ],
+    "answer": "It decreases"
+  },
+  {
+    "question": "Which of the following is a characteristic of a MOSFET?",
+    "options": [
+      "Low input impedance",
+      "High input impedance",
+      "Operates only in reverse bias",
+      "Emits light when biased"
+    ],
+    "answer": "High input impedance"
+  },
+  {
+    "question": "The collector in an npn transistor is made of:",
+    "options": [
+      "p-type material",
+      "n-type material",
+      "Insulating material",
+      "Conductive metal"
+    ],
+    "answer": "n-type material"
+  }
+
+
+
+
+
+    ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    let timer = 0;
+    let interval;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const timerEl = document.getElementById('timer');
+    const questionProgress = document.getElementById('questionProgress');
+
+    function startTimer() {
+      interval = setInterval(() => {
+        remainingTime--;
+        timer++;
+        const min = Math.floor(remainingTime / 60);
+        const sec = remainingTime % 60;
+        timerEl.innerText = `⏳ Time Left: ${min}m ${sec}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(interval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const current = questions[currentIndex];
+      questionEl.innerText = `Q${currentIndex + 1}: ${current.question}`;
+      questionProgress.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+      optionsEl.innerHTML = '';
+
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, current.answer, opt);
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.style.display = (currentIndex < questions.length - 1) ? 'inline-block' : 'none';
+      submitBtn.style.display = (currentIndex === questions.length - 1) ? 'inline-block' : 'none';
+    }
+
+    function selectOption(btn, correctAnswer, selected) {
+      const allBtns = optionsEl.querySelectorAll('button');
+      allBtns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.innerText === correctAnswer) b.classList.add('correct');
+      });
+
+      if (selected === correctAnswer) {
+        correctCount++;
+        btn.classList.add('correct');
+      } else {
+        wrongCount++;
+        btn.classList.add('wrong');
+      }
+
+      userAnswers[currentIndex] = selected;
+    }
+
+    function nextQuestion() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        loadQuestion();
+      }
+    }
+
+    function calculateScore() {
+      const negative = wrongCount * 0.2;
+      const rawScore = correctCount - negative;
+      return rawScore < 0 ? 0 : rawScore;
+    }
+
+    function submitQuiz() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered && currentIndex === questions.length - 1) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      clearInterval(interval);
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('resultBox').style.display = 'block';
+
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      const status = percentage >= 40 ? "✅ Pass" : "❌ Fail";
+
+      document.getElementById('finalTime').innerHTML = `
+        <p>🟢 Correct: ${correctCount}</p>
+        <p>🔴 Wrong: ${wrongCount}</p>
+        <p>⚪ Skipped: ${skippedCount}</p>
+        <p>📊 Total Score: ${score.toFixed(2)} / ${questions.length}</p>
+        <p>🎯 Result: <strong>${status}</strong></p>
+        <p>⏱️ Time Taken: ${Math.floor(timer / 60)}m ${timer % 60}s</p>
+      `;
+
+      showResultChart();
+      showQuestionReview();
+    }
+
+ function showResultChart() {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  const total = correctCount + wrongCount + skippedCount;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Wrong', 'Skipped'],
+      datasets: [{
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: [
+          'green',     // Green
+          'red',     // Red
+          'rgba(255, 193, 7, 1)'      // Yellow
+        ],
+        borderColor: '#f4f4f4',
+        borderWidth: 6,
+        borderRadius: 15,
+        hoverOffset: 10,
+        spacing: 5
+      }]
+    },
+    options: {
+      cutout: '40%',
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 14 }
+          }
+        },
+        datalabels: {
+          color: '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const data = ctx.chart.data.datasets[0].data;
+            const total = data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
+    function showQuestionReview() {
+      const reviewContainer = document.createElement('div');
+      reviewContainer.innerHTML = `<h3>📝 Question Review</h3>`;
+      questions.forEach((q, index) => {
+        const userAns = userAnswers[index];
+        const correct = q.answer;
+
+        const qDiv = document.createElement('div');
+        qDiv.style.marginBottom = '20px';
+        qDiv.innerHTML = `<strong>Q${index + 1}:</strong> ${q.question}`;
+
+        q.options.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.style.padding = '6px';
+          optDiv.style.borderRadius = '5px';
+          optDiv.style.margin = '4px 0';
+
+          if (opt === correct) {
+            optDiv.style.backgroundColor = '#d4edda';
+            optDiv.style.color = '#09da3a';
+          }
+
+          if (userAns === opt && opt !== correct) {
+            optDiv.style.backgroundColor = '#d1aaae';
+            optDiv.style.color = '#cf0d20';
+          }
+
+          optDiv.innerText = opt;
+          qDiv.appendChild(optDiv);
+        });
+
+        reviewContainer.appendChild(qDiv);
+      });
+
+      document.getElementById('resultBox').appendChild(reviewContainer);
+    }
+
+    // Initialize
+    startTimer();
+    loadQuestion();
+  </script>
+</body>
+</html>
