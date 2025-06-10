@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Responsive Peaceful Site</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background-color: #f5f9fc;
+      color: #333;
+    }
+
+    /* Navbar */
+    nav {
+      background-color: #d0e8f2;
+      padding: 15px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #255c99;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    nav ul li a {
+      text-decoration: none;
+      color: #255c99;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    nav ul li a:hover {
+      color: #1c3f6e;
+    }
+
+    /* Slider */
+    .slider-container {
+      max-width: 800px;
+      margin: 40px auto;
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      background-color: #ffffff;
+    }
+    .slider {
+      height:250px;
+      width: 100%;
+      overflow: hidden;
+      margin:10px auto;
+    }
+
+    .slides {
+      display: flex;
+      width: 300%;
+      animation: slide 8s infinite;
+    }
+
+    .slides img {
+      width: 100%;
+      height: 250px;
+      object-fit:cover;
+    }
+
+    @keyframes slide {
+      0% { margin-left: 0; }
+      33% { margin-left: 0; }
+      36% { margin-left: -100%; }
+      66% { margin-left: -100%; }
+      69% { margin-left: -200%; }
+      99% { margin-left: -200%; }
+      100% { margin-left: 0; }
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 60px 20px;
+      text-align: center;
+      background-color: #ffffff;
+    }
+
+    .hero h1 {
+      font-size: 36px;
+      color: #255c99;
+      margin-bottom: 20px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      max-width: 700px;
+      margin: auto;
+      color: #555;
+    }
+
+    /* Footer */
+    footer {
+      background-color: #d0e8f2;
+      padding: 20px;
+      text-align: center;
+      color: #555;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      nav {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      nav ul {
+        width: 100%;
+        justify-content: space-around;
+        padding-top: 10px;
+      }
+
+      .slides img {
+        height: 250px;
+      }
+
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .hero p {
+        font-size: 16px;
+        padding: 0 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      nav ul {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .slides img {
+        height: 200px;
+      }
+
+      .hero h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+    <div class="logo">QuizTimes</div>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="MCQ.html">MCQ</a></li>
+      <li><a href="PastYearQuestion.html">Past Year Question</a></li>
+      <li><a href="QuizTimes.html">Quiz Times</a></li>
+      <li><a href="Syllabus.html">Syllabus</a></li>
+      <li><a href="Notice.html">Notice</a></li>
+    </ul>
+  </nav>
+  <h2 style="text-align: center,;">COMPUTER OPERATOR PREPARATION</h2>
+  <!-- Slider -->
+  <div class="slider-container">
+    <div class="slides">
+      <img src="img/nrb.jpg" alt="Slide 1" />
+      <img src="img/psc.jpg" alt="Slide 2" />
+      <img src="img/noc.jpg" alt="Slide 3" />
+     <!--<img src="psc.jpg" alt="Slide 4" />-->
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <div class="hero">
+    <h1>Welcome to Our Page</h1>
+    <h1>Let's Start your Journey From Here!!!</h1>
+    <p>
+      Explore our clean and minimal design that adapts beautifully on any screen. We believe in simplicity, clarity, and a peaceful user experience.
+      Let's play, learn and achieve your dream job.
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    &copy; 2025 MyWebsite. All rights reserved.
+  </footer>
+
+</body>
+</html>
