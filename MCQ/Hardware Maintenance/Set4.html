@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .quiz-container, .result-container {
+      background: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .wrong {
+      background-color: #f44336;
+      color: white;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    #timer {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    #nextBtn, #submitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #submitBtn {
+      display: none;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #questionProgress {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizBox">
+    <h2>Quiz App</h2>
+    <div id="timer">⏳ Time Left: 45m 0s</div>
+    <div id="questionProgress"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+  </div>
+
+  <div class="result-container" id="resultBox" style="display:none;">
+    <h2>Quiz Result</h2>
+    <canvas id="resultChart"></canvas>
+    <div id="finalTime"></div>
+  </div>
+
+  <script>
+    const totalTime = 2700; // 45 minutes
+    let remainingTime = totalTime;
+
+    const questions = [
+    
+    
+  {
+    question: "What is a symptom of a failing graphics card?",
+    options: ["Slow internet", "Screen artifacts or crashes during gaming", "Keyboard failure", "Printer jams"],
+    answer: "Screen artifacts or crashes during gaming"
+  },
+  {
+    question: "Which expansion card is essential for wired internet connectivity?",
+    options: ["Sound card", "Network card", "Graphics card", "Storage card"],
+    answer: "Network card"
+  },
+  {
+    question: "What should you check after installing a sound card if there’s no audio?",
+    options: ["Monitor settings", "Sound drivers and connections", "Hard disk space", "Printer ink"],
+    answer: "Sound drivers and connections"
+  },
+  {
+    question: "What is a benefit of installing a dedicated graphics card?",
+    options: ["Increased storage", "Better gaming performance", "Faster internet", "Improved printing"],
+    answer: "Better gaming performance"
+  },
+  {
+    question: "What precaution should be taken when handling expansion cards?",
+    options: ["Use excessive force", "Avoid static discharge", "Keep the system powered on", "Touch the connectors"],
+    answer: "Avoid static discharge"
+  },
+  {
+    question: "What is a common slot for a network card?",
+    options: ["PCIe x1", "SATA", "USB", "RAM slot"],
+    answer: "PCIe x1"
+  },
+  {
+    question: "What might cause a graphics card to overheat?",
+    options: ["Low RAM", "Blocked cooling fans or dust buildup", "Slow internet", "Outdated BIOS"],
+    answer: "Blocked cooling fans or dust buildup"
+  },
+  {
+    question: "What is required after installing a new expansion card?",
+    options: ["Format the hard disk", "Install the appropriate driver", "Replace the monitor", "Update the BIOS"],
+    answer: "Install the appropriate driver"
+  },
+  {
+    question: "Which expansion card improves audio for gaming?",
+    options: ["Network card", "Sound card", "Graphics card", "Memory card"],
+    answer: "Sound card"
+  },
+  {
+    question: "What should you do if an expansion card is not detected?",
+    options: ["Check the slot and reseat the card", "Replace the monitor", "Format the hard disk", "Update the printer driver"],
+    answer: "Check the slot and reseat the card"
+  },
+  {
+    question: "What should you do before formatting a hard disk?",
+    options: ["Back up all data", "Install new software", "Update the BIOS", "Replace the monitor"],
+    answer: "Back up all data"
+  },
+  {
+    question: "What is the benefit of partitioning a hard disk?",
+    options: ["Increases storage capacity", "Organizes data and separates OS from files", "Improves monitor resolution", "Boosts internet speed"],
+    answer: "Organizes data and separates OS from files"
+  },
+  {
+    question: "What is a disadvantage of the FAT32 file system?",
+    options: ["Limited file size support (4 GB max)", "High security features", "Slow performance", "Large partition support"],
+    answer: "Limited file size support (4 GB max)"
+  },
+  {
+    question: "What does shrinking a partition create?",
+    options: ["A new hard disk", "Unallocated space", "A backup file", "A new operating system"],
+    answer: "Unallocated space"
+  },
+  {
+    question: "What is a common connector for an SSD?",
+    options: ["HDMI", "SATA", "USB", "Ethernet"],
+    answer: "SATA"
+  },
+  {
+    question: "What is a benefit of using an SSD over an HDD?",
+    options: ["Lower cost", "Faster data access speeds", "Larger storage capacity", "Easier installation"],
+    answer: "Faster data access speeds"
+  },
+  {
+    question: "What tool can be used to shrink a partition in Windows?",
+    options: ["File Explorer", "Disk Management", "Device Manager", "BIOS"],
+    answer: "Disk Management"
+  },
+  {
+    question: "What happens if a hard disk is not properly connected?",
+    options: ["Improved performance", "System may not detect the disk", "Faster internet", "Better graphics"],
+    answer: "System may not detect the disk"
+  },
+  {
+    question: "What is the purpose of formatting a new hard disk?",
+    options: ["To install drivers", "To create a file system for data storage", "To increase storage capacity", "To improve monitor quality"],
+    answer: "To create a file system for data storage"
+  },
+  {
+    question: "What is a risk of partitioning a hard disk?",
+    options: ["Improved performance", "Data loss if not done correctly", "Increased storage", "Faster boot time"],
+    answer: "Data loss if not done correctly"
+  },
+  {
+    question: "What is a characteristic of a Plasma display?",
+    options: ["Uses liquid crystals", "High contrast and vibrant colors", "Low power consumption", "Small size"],
+    answer: "High contrast and vibrant colors"
+  },
+  {
+    question: "What is a disadvantage of an LCD monitor?",
+    options: ["Poor viewing angles", "High power consumption", "Heavy weight", "Large size"],
+    answer: "Poor viewing angles"
+  },
+  {
+    question: "Which display type is most prone to screen burn-in?",
+    options: ["CRT", "LCD", "LED", "Plasma"],
+    answer: "Plasma"
+  },
+  {
+    question: "What is a benefit of using an LED monitor over an LCD?",
+    options: ["Thinner design and better energy efficiency", "Heavier weight", "Lower resolution", "Slower response time"],
+    answer: "Thinner design and better energy efficiency"
+  },
+  {
+    question: "What technology does a CRT monitor use to display images?",
+    options: ["Liquid crystals", "Phosphor-coated screen and electron beams", "Gas plasma", "Light-emitting diodes"],
+    answer: "Phosphor-coated screen and electron beams"
+  }
+
+
+
+    ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    let timer = 0;
+    let interval;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const timerEl = document.getElementById('timer');
+    const questionProgress = document.getElementById('questionProgress');
+
+    function startTimer() {
+      interval = setInterval(() => {
+        remainingTime--;
+        timer++;
+        const min = Math.floor(remainingTime / 60);
+        const sec = remainingTime % 60;
+        timerEl.innerText = `⏳ Time Left: ${min}m ${sec}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(interval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const current = questions[currentIndex];
+      questionEl.innerText = `Q${currentIndex + 1}: ${current.question}`;
+      questionProgress.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+      optionsEl.innerHTML = '';
+
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, current.answer, opt);
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.style.display = (currentIndex < questions.length - 1) ? 'inline-block' : 'none';
+      submitBtn.style.display = (currentIndex === questions.length - 1) ? 'inline-block' : 'none';
+    }
+
+    function selectOption(btn, correctAnswer, selected) {
+      const allBtns = optionsEl.querySelectorAll('button');
+      allBtns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.innerText === correctAnswer) b.classList.add('correct');
+      });
+
+      if (selected === correctAnswer) {
+        correctCount++;
+        btn.classList.add('correct');
+      } else {
+        wrongCount++;
+        btn.classList.add('wrong');
+      }
+
+      userAnswers[currentIndex] = selected;
+    }
+
+    function nextQuestion() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        loadQuestion();
+      }
+    }
+
+    function calculateScore() {
+      const negative = wrongCount * 0.2;
+      const rawScore = correctCount - negative;
+      return rawScore < 0 ? 0 : rawScore;
+    }
+
+    function submitQuiz() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered && currentIndex === questions.length - 1) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      clearInterval(interval);
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('resultBox').style.display = 'block';
+
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      const status = percentage >= 40 ? "✅ Pass" : "❌ Fail";
+
+      document.getElementById('finalTime').innerHTML = `
+        <p>🟢 Correct: ${correctCount}</p>
+        <p>🔴 Wrong: ${wrongCount}</p>
+        <p>⚪ Skipped: ${skippedCount}</p>
+        <p>📊 Total Score: ${score.toFixed(2)} / ${questions.length}</p>
+        <p>🎯 Result: <strong>${status}</strong></p>
+        <p>⏱️ Time Taken: ${Math.floor(timer / 60)}m ${timer % 60}s</p>
+      `;
+
+      showResultChart();
+      showQuestionReview();
+    }
+
+ function showResultChart() {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  const total = correctCount + wrongCount + skippedCount;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Wrong', 'Skipped'],
+      datasets: [{
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: [
+          'green',     // Green
+          'red',     // Red
+          'rgba(255, 193, 7, 1)'      // Yellow
+        ],
+        borderColor: '#f4f4f4',
+        borderWidth: 6,
+        borderRadius: 15,
+        hoverOffset: 10,
+        spacing: 5
+      }]
+    },
+    options: {
+      cutout: '40%',
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 14 }
+          }
+        },
+        datalabels: {
+          color: '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const data = ctx.chart.data.datasets[0].data;
+            const total = data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
+    function showQuestionReview() {
+      const reviewContainer = document.createElement('div');
+      reviewContainer.innerHTML = `<h3>📝 Question Review</h3>`;
+      questions.forEach((q, index) => {
+        const userAns = userAnswers[index];
+        const correct = q.answer;
+
+        const qDiv = document.createElement('div');
+        qDiv.style.marginBottom = '20px';
+        qDiv.innerHTML = `<strong>Q${index + 1}:</strong> ${q.question}`;
+
+        q.options.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.style.padding = '6px';
+          optDiv.style.borderRadius = '5px';
+          optDiv.style.margin = '4px 0';
+
+          if (opt === correct) {
+            optDiv.style.backgroundColor = '#d4edda';
+            optDiv.style.color = '#09da3a';
+          }
+
+          if (userAns === opt && opt !== correct) {
+            optDiv.style.backgroundColor = '#d1aaae';
+            optDiv.style.color = '#cf0d20';
+          }
+
+          optDiv.innerText = opt;
+          qDiv.appendChild(optDiv);
+        });
+
+        reviewContainer.appendChild(qDiv);
+      });
+
+      document.getElementById('resultBox').appendChild(reviewContainer);
+    }
+
+    // Initialize
+    startTimer();
+    loadQuestion();
+  </script>
+</body>
+</html>

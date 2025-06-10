@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .quiz-container, .result-container {
+      background: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .wrong {
+      background-color: #f44336;
+      color: white;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    #timer {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    #nextBtn, #submitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #submitBtn {
+      display: none;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #questionProgress {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizBox">
+    <h2>Quiz App</h2>
+    <div id="timer">⏳ Time Left: 45m 0s</div>
+    <div id="questionProgress"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+  </div>
+
+  <div class="result-container" id="resultBox" style="display:none;">
+    <h2>Quiz Result</h2>
+    <canvas id="resultChart"></canvas>
+    <div id="finalTime"></div>
+  </div>
+
+  <script>
+    const totalTime = 2700; // 45 minutes
+    let remainingTime = totalTime;
+
+    const questions = [
+    
+  {
+    question: "What is a possible reason for a network card not working?",
+    options: ["Outdated drivers", "Low battery in the mouse", "Overheating CPU", "Full hard disk"],
+    answer: "Outdated drivers"
+  },
+  {
+    question: "What might cause intermittent network disconnections?",
+    options: ["Router overheating or interference", "Slow printing", "Low RAM", "Faulty monitor"],
+    answer: "Router overheating or interference"
+  },
+  {
+    question: "What should you do if a computer cannot detect a network cable?",
+    options: ["Check the cable and port for damage", "Replace the hard disk", "Update the printer drivers", "Format the system"],
+    answer: "Check the cable and port for damage"
+  },
+  {
+    question: "What is a common symptom of a failing network cable?",
+    options: ["Slow or unstable connection", "Overheating CPU", "Low battery in the mouse", "Full hard disk"],
+    answer: "Slow or unstable connection"
+  },
+  {
+    question: "What can you do to troubleshoot a network connectivity issue?",
+    options: ["Restart the computer and router", "Replace the monitor", "Format the hard disk", "Update the BIOS"],
+    answer: "Restart the computer and router"
+  },
+  {
+    question: "What is a symptom of a failing RAM module?",
+    options: ["Random system crashes or blue screens", "Slow internet", "Overheating CPU", "Printer failure"],
+    answer: "Random system crashes or blue screens"
+  },
+  {
+    question: "What might cause a processor to overheat?",
+    options: ["Clogged CPU fan or thermal paste issues", "Low battery in the mouse", "Slow network", "Full hard disk"],
+    answer: "Clogged CPU fan or thermal paste issues"
+  },
+  {
+    question: "What is a common issue with a failing hard disk?",
+    options: ["Clicking noises or slow performance", "Overheating CPU", "Slow internet", "Printer jams"],
+    answer: "Clicking noises or slow performance"
+  },
+  {
+    question: "What should you do if a display shows “No Signal”?",
+    options: ["Check the video cable and monitor connection", "Replace the hard disk", "Update the printer drivers", "Format the system"],
+    answer: "Check the video cable and monitor connection"
+  },
+  {
+    question: "What might cause a computer to run slowly due to memory issues?",
+    options: ["Insufficient RAM or too many running processes", "Slow internet", "Overheating CPU", "Printer failure"],
+    answer: "Insufficient RAM or too many running processes"
+  },
+  {
+    question: "What is a sign of a failing processor?",
+    options: ["System freezes or failure to boot", "Slow printing", "Low battery in the mouse", "Full hard disk"],
+    answer: "System freezes or failure to boot"
+  },
+  {
+    question: "What should you do if a hard disk is not detected?",
+    options: ["Check the SATA cable and power connection", "Replace the monitor", "Update the BIOS", "Format the system"],
+    answer: "Check the SATA cable and power connection"
+  },
+  {
+    question: "What might cause a display to flicker?",
+    options: ["Loose video cable or refresh rate issues", "Slow internet", "Overheating CPU", "Full hard disk"],
+    answer: "Loose video cable or refresh rate issues"
+  },
+  {
+    question: "What tool can be used to test RAM for errors?",
+    options: ["Windows Memory Diagnostic", "Disk Management", "Device Manager", "File Explorer"],
+    answer: "Windows Memory Diagnostic"
+  },
+  {
+    question: "What is a possible solution for a computer that fails to boot due to a processor issue?",
+    options: ["Reseat the CPU or check for overheating", "Replace the monitor", "Format the hard disk", "Update the printer drivers"],
+    answer: "Reseat the CPU or check for overheating"
+  },
+  {
+    question: "What is a key difference between a vacuum tube and a semiconductor?",
+    options: ["Vacuum tubes are smaller than semiconductors", "Semiconductors use less power than vacuum tubes", "Vacuum tubes are more reliable", "Semiconductors are larger in size"],
+    answer: "Semiconductors use less power than vacuum tubes"
+  },
+  {
+    question: "What was a primary disadvantage of vacuum tubes in early computers?",
+    options: ["High cost", "Large size and heat generation", "Low speed", "High reliability"],
+    answer: "Large size and heat generation"
+  },
+  {
+    question: "Which technology replaced vacuum tubes in modern electronics?",
+    options: ["Transistors and semiconductors", "Capacitors", "Resistors", "Inductors"],
+    answer: "Transistors and semiconductors"
+  },
+  {
+    question: "What material is commonly used in semiconductors?",
+    options: ["Glass", "Silicon", "Plastic", "Copper"],
+    answer: "Silicon"
+  },
+  {
+    question: "Why were vacuum tubes less reliable than semiconductors?",
+    options: ["They burned out frequently", "They were smaller", "They consumed less power", "They were faster"],
+    answer: "They burned out frequently"
+  },
+  {
+    question: "What is the primary function of a P-N junction diode?",
+    options: ["To amplify signals", "To allow current in one direction only", "To store data", "To emit light"],
+    answer: "To allow current in one direction only"
+  },
+  {
+    question: "What is a key application of a Zener diode?",
+    options: ["Voltage regulation", "Light emission", "Signal amplification", "Data storage"],
+    answer: "Voltage regulation"
+  },
+  {
+    question: "What does an LED emit when current passes through it?",
+    options: ["Sound", "Light", "Heat", "Data"],
+    answer: "Light"
+  },
+  {
+    question: "What is the role of a resistor in a circuit?",
+    options: ["To store energy", "To limit current flow", "To amplify signals", "To emit light"],
+    answer: "To limit current flow"
+  },
+  {
+    question: "What is a common use of a bipolar junction transistor (BJT)?",
+    options: ["Voltage regulation", "Signal amplification or switching", "Light emission", "Data storage"],
+    answer: "Signal amplification or switching"
+  },
+
+
+    
+  {
+    question: "What might cause a printer to print with faded text?",
+    options: [
+      "Low ink or toner levels",
+      "Overheating CPU",
+      "Slow network",
+      "Low RAM"
+    ],
+    answer: "Low ink or toner levels"
+  },
+  {
+    question: "What should you do if a keyboard is sticky after cleaning?",
+    options: [
+      "Let it dry completely before use",
+      "Replace the monitor",
+      "Update the BIOS",
+      "Format the hard disk"
+    ],
+    answer: "Let it dry completely before use"
+  },
+  {
+    question: "What is a possible reason for a mouse not tracking properly?",
+    options: [
+      "Dirty sensor or surface",
+      "Low battery in the monitor",
+      "Overheating CPU",
+      "Full hard disk"
+    ],
+    answer: "Dirty sensor or surface"
+  },
+  {
+    question: "What might cause a scanner to produce distorted images?",
+    options: [
+      "Misaligned scan head",
+      "Slow internet",
+      "Overheating CPU",
+      "Low RAM"
+    ],
+    answer: "Misaligned scan head"
+  },
+  {
+    question: "What should you check if a speaker buzzes intermittently?",
+    options: [
+      "Grounding and cable connections",
+      "Monitor resolution",
+      "Hard disk space",
+      "Printer ink"
+    ],
+    answer: "Grounding and cable connections"
+  },
+  {
+    question: "What is a common fix for a printer that jams frequently?",
+    options: [
+      "Clear paper path and check paper quality",
+      "Replace the monitor",
+      "Update the BIOS",
+      "Format the system"
+    ],
+    answer: "Clear paper path and check paper quality"
+  },
+  {
+    question: "What might cause a keyboard to stop responding intermittently?",
+    options: [
+      "Loose USB connection",
+      "Overheating CPU",
+      "Slow network",
+      "Faulty monitor"
+    ],
+    answer: "Loose USB connection"
+  },
+  {
+    question: "What should you do if a scanner produces lines on scanned images?",
+    options: [
+      "Clean the scanner glass and calibrate it",
+      "Replace the hard disk",
+      "Update the printer drivers",
+      "Format the system"
+    ],
+    answer: "Clean the scanner glass and calibrate it"
+  },
+  {
+    question: "What is a potential cause of a mouse scroll wheel not working?",
+    options: [
+      "Worn-out scroll mechanism",
+      "Low battery in the keyboard",
+      "Overheating CPU",
+      "Full hard disk"
+    ],
+    answer: "Worn-out scroll mechanism"
+  },
+  {
+    question: "What might cause a speaker to cut out during use?",
+    options: [
+      "Loose audio cable or driver issue",
+      "Slow internet",
+      "Overheating CPU",
+      "Low RAM"
+    ],
+    answer: "Loose audio cable or driver issue"
+  }
+
+
+
+    ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    let timer = 0;
+    let interval;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const timerEl = document.getElementById('timer');
+    const questionProgress = document.getElementById('questionProgress');
+
+    function startTimer() {
+      interval = setInterval(() => {
+        remainingTime--;
+        timer++;
+        const min = Math.floor(remainingTime / 60);
+        const sec = remainingTime % 60;
+        timerEl.innerText = `⏳ Time Left: ${min}m ${sec}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(interval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const current = questions[currentIndex];
+      questionEl.innerText = `Q${currentIndex + 1}: ${current.question}`;
+      questionProgress.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+      optionsEl.innerHTML = '';
+
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, current.answer, opt);
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.style.display = (currentIndex < questions.length - 1) ? 'inline-block' : 'none';
+      submitBtn.style.display = (currentIndex === questions.length - 1) ? 'inline-block' : 'none';
+    }
+
+    function selectOption(btn, correctAnswer, selected) {
+      const allBtns = optionsEl.querySelectorAll('button');
+      allBtns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.innerText === correctAnswer) b.classList.add('correct');
+      });
+
+      if (selected === correctAnswer) {
+        correctCount++;
+        btn.classList.add('correct');
+      } else {
+        wrongCount++;
+        btn.classList.add('wrong');
+      }
+
+      userAnswers[currentIndex] = selected;
+    }
+
+    function nextQuestion() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        loadQuestion();
+      }
+    }
+
+    function calculateScore() {
+      const negative = wrongCount * 0.2;
+      const rawScore = correctCount - negative;
+      return rawScore < 0 ? 0 : rawScore;
+    }
+
+    function submitQuiz() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered && currentIndex === questions.length - 1) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      clearInterval(interval);
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('resultBox').style.display = 'block';
+
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      const status = percentage >= 40 ? "✅ Pass" : "❌ Fail";
+
+      document.getElementById('finalTime').innerHTML = `
+        <p>🟢 Correct: ${correctCount}</p>
+        <p>🔴 Wrong: ${wrongCount}</p>
+        <p>⚪ Skipped: ${skippedCount}</p>
+        <p>📊 Total Score: ${score.toFixed(2)} / ${questions.length}</p>
+        <p>🎯 Result: <strong>${status}</strong></p>
+        <p>⏱️ Time Taken: ${Math.floor(timer / 60)}m ${timer % 60}s</p>
+      `;
+
+      showResultChart();
+      showQuestionReview();
+    }
+
+ function showResultChart() {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  const total = correctCount + wrongCount + skippedCount;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Wrong', 'Skipped'],
+      datasets: [{
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: [
+          'green',     // Green
+          'red',     // Red
+          'rgba(255, 193, 7, 1)'      // Yellow
+        ],
+        borderColor: '#f4f4f4',
+        borderWidth: 6,
+        borderRadius: 15,
+        hoverOffset: 10,
+        spacing: 5
+      }]
+    },
+    options: {
+      cutout: '40%',
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 14 }
+          }
+        },
+        datalabels: {
+          color: '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const data = ctx.chart.data.datasets[0].data;
+            const total = data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
+    function showQuestionReview() {
+      const reviewContainer = document.createElement('div');
+      reviewContainer.innerHTML = `<h3>📝 Question Review</h3>`;
+      questions.forEach((q, index) => {
+        const userAns = userAnswers[index];
+        const correct = q.answer;
+
+        const qDiv = document.createElement('div');
+        qDiv.style.marginBottom = '20px';
+        qDiv.innerHTML = `<strong>Q${index + 1}:</strong> ${q.question}`;
+
+        q.options.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.style.padding = '6px';
+          optDiv.style.borderRadius = '5px';
+          optDiv.style.margin = '4px 0';
+
+          if (opt === correct) {
+            optDiv.style.backgroundColor = '#d4edda';
+            optDiv.style.color = '#09da3a';
+          }
+
+          if (userAns === opt && opt !== correct) {
+            optDiv.style.backgroundColor = '#d1aaae';
+            optDiv.style.color = '#cf0d20';
+          }
+
+          optDiv.innerText = opt;
+          qDiv.appendChild(optDiv);
+        });
+
+        reviewContainer.appendChild(qDiv);
+      });
+
+      document.getElementById('resultBox').appendChild(reviewContainer);
+    }
+
+    // Initialize
+    startTimer();
+    loadQuestion();
+  </script>
+</body>
+</html>

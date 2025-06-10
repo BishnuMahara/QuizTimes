@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .quiz-container, .result-container {
+      background: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .correct {
+      background-color: #4caf50;
+      color: white;
+    }
+    .wrong {
+      background-color: #f44336;
+      color: white;
+    }
+    .disabled {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+    #timer {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    #nextBtn, #submitBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #submitBtn {
+      display: none;
+    }
+    canvas {
+      max-width: 100%;
+    }
+    #questionProgress {
+      font-size: 16px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container" id="quizBox">
+    <h2>Quiz App</h2>
+    <div id="timer">⏳ Time Left: 45m 0s</div>
+    <div id="questionProgress"></div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Next</button>
+    <button id="submitBtn" onclick="submitQuiz()">Submit</button>
+  </div>
+
+  <div class="result-container" id="resultBox" style="display:none;">
+    <h2>Quiz Result</h2>
+    <canvas id="resultChart"></canvas>
+    <div id="finalTime"></div>
+  </div>
+
+  <script>
+    const totalTime = 2700; // 45 minutes
+    let remainingTime = totalTime;
+
+    const questions = [
+    
+    
+    {
+  question: "What is a common sign of a failing power supply?",
+  options: ["Blue screen errors", "Random system shutdowns", "Slow internet speed", "Monitor flickering"],
+  answer: "Random system shutdowns"
+},
+{
+  question: "Which BIOS setting can disable onboard graphics?",
+  options: ["Boot priority", "Integrated peripherals", "Overclocking settings", "Date and time"],
+  answer: "Integrated peripherals"
+},
+{
+  question: "What is a key difference between CRT and LCD monitors?",
+  options: ["CRT is thinner than LCD", "LCD uses less power than CRT", "CRT has better resolution", "LCD is heavier than CRT"],
+  answer: "LCD uses less power than CRT"
+},
+{
+  question: "Which printer type is best for high-volume printing?",
+  options: ["Inkjet", "Bubble jet", "Laser", "Thermal"],
+  answer: "Laser"
+},
+{
+  question: "How does a UPS help during a power outage?",
+  options: ["Increases internet speed", "Provides temporary power to save work", "Boosts CPU performance", "Cools the system"],
+  answer: "Provides temporary power to save work"
+},
+{
+  question: "What type of keyboard uses mechanical switches?",
+  options: ["Membrane keyboard", "Mechanical keyboard", "Virtual keyboard", "Capacitive keyboard"],
+  answer: "Mechanical keyboard"
+},
+{
+  question: "What might cause a scanner to produce blurry images?",
+  options: ["Dirty glass surface", "Low RAM", "Overheating CPU", "Slow network"],
+  answer: "Dirty glass surface"
+},
+{
+  question: "What powers the CMOS chip to retain BIOS settings?",
+  options: ["Main power supply", "CMOS battery", "Hard disk", "RAM"],
+  answer: "CMOS battery"
+},
+{
+  question: "Which monitor type has the fastest response time?",
+  options: ["CRT", "LCD", "LED", "Plasma"],
+  answer: "LED"
+},
+{
+  question: "What is a common issue with a laser printer?",
+  options: ["Ink smudging", "Toner cartridge leaks", "Slow scanning", "Low battery"],
+  answer: "Toner cartridge leaks"
+},
+{
+  question: "What should you do if a speaker produces distorted sound?",
+  options: ["Check audio cables and settings", "Replace the monitor", "Format the hard disk", "Update the printer driver"],
+  answer: "Check audio cables and settings"
+},
+{
+  question: "Which storage device is typically the fastest?",
+  options: ["HDD", "SSD", "USB flash drive", "DVD"],
+  answer: "SSD"
+},
+{
+  question: "What is a benefit of using a bubble jet printer?",
+  options: ["High-speed printing", "Low cost per page", "Good quality for photo printing", "No maintenance required"],
+  answer: "Good quality for photo printing"
+},
+{
+  question: "What is the runtime of a UPS dependent on?",
+  options: ["Monitor size", "Battery capacity and load", "CPU speed", "Hard disk space"],
+  answer: "Battery capacity and load"
+},
+{
+  question: "What should you do if a mouse pointer moves erratically?",
+  options: ["Clean the mouse sensor", "Replace the monitor", "Format the hard disk", "Update the BIOS"],
+  answer: "Clean the mouse sensor"
+},
+{
+  question: "What is the purpose of a southbridge chipset?",
+  options: ["Manages high-speed components like RAM", "Handles slower peripherals like USB", "Controls the monitor", "Powers the CPU"],
+  answer: "Handles slower peripherals like USB"
+},
+{
+  question: "What type of RAM is commonly used in modern motherboards?",
+  options: ["SDRAM", "DDR4", "RDRAM", "EDO RAM"],
+  answer: "DDR4"
+},
+{
+  question: "What can a jumper be used for on a motherboard?",
+  options: ["To overclock the CPU", "To reset the BIOS password", "To connect to the internet", "To increase storage"],
+  answer: "To reset the BIOS password"
+},
+{
+  question: "What determines CPU compatibility with a motherboard?",
+  options: ["RAM type", "Socket type", "Hard disk size", "Monitor resolution"],
+  answer: "Socket type"
+},
+{
+  question: "What is a common symptom of a failing motherboard?",
+  options: ["Slow internet", "Failure to boot or random crashes", "Low battery", "Blurry display"],
+  answer: "Failure to boot or random crashes"
+},
+{
+  question: "What is the purpose of a capacitor on a motherboard?",
+  options: ["To store data", "To regulate voltage", "To connect peripherals", "To display graphics"],
+  answer: "To regulate voltage"
+},
+{
+  question: "Which component connects the CPU to the motherboard?",
+  options: ["RAM slot", "CPU socket", "Expansion slot", "Jumper"],
+  answer: "CPU socket"
+},
+{
+  question: "What is a risk of installing incompatible RAM on a motherboard?",
+  options: ["Improved performance", "System failure or no boot", "Faster internet", "Increased storage"],
+  answer: "System failure or no boot"
+},
+{
+  question: "What is the function of a BIOS chip on a motherboard?",
+  options: ["To store user data", "To manage basic hardware initialization", "To connect to the internet", "To display graphics"],
+  answer: "To manage basic hardware initialization"
+},
+{
+  question: "What does a motherboard’s form factor determine?",
+  options: ["CPU speed", "Physical size and layout", "Hard disk capacity", "Monitor type"],
+  answer: "Physical size and layout"
+},
+
+  {
+    question: "Which display device is the oldest technology among the following?",
+    options: ["LCD", "LED", "CRT", "Plasma"],
+    answer: "CRT"
+  },
+  {
+    question: "What is a key feature of an LED display?",
+    options: ["Uses cathode ray tubes", "Energy-efficient backlighting", "Heavy and bulky design", "Low resolution"],
+    answer: "Energy-efficient backlighting"
+  },
+  {
+    question: "Which display type is known for its high contrast and deep blacks?",
+    options: ["CRT", "LCD", "Plasma", "LED"],
+    answer: "Plasma"
+  },
+  {
+    question: "What is a disadvantage of a CRT monitor?",
+    options: ["High energy efficiency", "Large size and weight", "High resolution", "Thin design"],
+    answer: "Large size and weight"
+  },
+  {
+    question: "Which display type uses liquid crystals?",
+    options: ["CRT", "Plasma", "LCD", "None of the above"],
+    answer: "LCD"
+  },
+  {
+    question: "Which connector is commonly used for Ethernet cables?",
+    options: ["BNC", "RJ45", "HDMI", "USB"],
+    answer: "RJ45"
+  },
+  {
+    question: "What is the primary use of an HDMI cable?",
+    options: ["To connect to a network", "To transmit high-definition audio and video", "To power the system", "To connect a keyboard"],
+    answer: "To transmit high-definition audio and video"
+  },
+  {
+    question: "Which connector is typically used for coaxial cables?",
+    options: ["RJ45", "HDMI", "BNC", "SATA"],
+    answer: "BNC"
+  },
+  {
+    question: "What type of cable is associated with an RJ45 connector?",
+    options: ["Coaxial cable", "Ethernet cable", "HDMI cable", "Power cable"],
+    answer: "Ethernet cable"
+  },
+  {
+    question: "Which connector would you use to connect a monitor to a computer for high-definition display?",
+    options: ["RJ45", "BNC", "HDMI", "USB"],
+    answer: "HDMI"
+  },
+  {
+    question: "What should you do if a keyboard is not responding?",
+    options: ["Restart the computer", "Replace the monitor", "Update the graphics driver", "Format the hard disk"],
+    answer: "Restart the computer"
+  },
+  {
+    question: "What is a common issue with a printer?",
+    options: ["Paper jam", "Slow internet", "Overheating CPU", "Low RAM"],
+    answer: "Paper jam"
+  },
+  {
+    question: "If a speaker is not producing sound, what should you check first?",
+    options: ["Hard disk space", "Volume settings and connections", "Printer drivers", "Monitor resolution"],
+    answer: "Volume settings and connections"
+  },
+  {
+    question: "What is a likely cause of a scanner not working?",
+    options: ["Outdated drivers", "Low battery in the mouse", "Overheating CPU", "Full hard disk"],
+    answer: "Outdated drivers"
+  },
+  {
+    question: "What should you do if a mouse cursor is not moving?",
+    options: ["Check the USB connection or replace batteries", "Update the printer drivers", "Format the hard disk", "Replace the monitor"],
+    answer: "Check the USB connection or replace batteries"
+  },
+  {
+    question: "What should you check if a computer cannot connect to the internet?",
+    options: ["Monitor settings", "Network cables and router", "Hard disk space", "Printer drivers"],
+    answer: "Network cables and router"
+  },
+  {
+    question: "What is a common issue with network connectivity?",
+    options: ["Loose or damaged Ethernet cable", "Overheating CPU", "Low RAM", "Outdated monitor drivers"],
+    answer: "Loose or damaged Ethernet cable"
+  },
+  {
+    question: "What should you do if a computer is not detecting a network?",
+    options: ["Restart the router", "Format the hard disk", "Replace the monitor", "Update the printer drivers"],
+    answer: "Restart the router"
+  },
+  {
+    question: "What type of cable is used to connect a computer to a router?",
+    options: ["HDMI cable", "Ethernet cable", "Power cable", "USB cable"],
+    answer: "Ethernet cable"
+  },
+  {
+    question: "What is a possible solution for a slow network connection?",
+    options: ["Restart the router or check for interference", "Replace the monitor", "Format the hard disk", "Update the keyboard drivers"],
+    answer: "Restart the router or check for interference"
+  },
+  {
+    question: "What is a common symptom of a failing hard disk?",
+    options: ["Slow boot times or clicking noises", "Flickering monitor", "Keyboard not responding", "Slow internet"],
+    answer: "Slow boot times or clicking noises"
+  },
+  {
+    question: "What should you do if a computer is overheating due to a processor issue?",
+    options: ["Check the CPU fan and clean dust", "Replace the monitor", "Format the hard disk", "Update the printer drivers"],
+    answer: "Check the CPU fan and clean dust"
+  },
+  {
+    question: "What is a likely cause of a computer displaying a 'No Signal' message on the monitor?",
+    options: ["Loose display cable", "Low RAM", "Outdated keyboard drivers", "Full hard disk"],
+    answer: "Loose display cable"
+  },
+  {
+    question: "What should you check if a computer is running slowly due to memory issues?",
+    options: ["Amount of free RAM and running processes", "Monitor resolution", "Printer drivers", "Hard disk partitions"],
+    answer: "Amount of free RAM and running processes"
+  },
+  {
+    question: "What is a possible solution for a computer that fails to boot due to storage issues?",
+    options: ["Check the hard disk connections or replace the drive", "Update the graphics drivers", "Replace the keyboard", "Restart the monitor"],
+    answer: "Check the hard disk connections or replace the drive"
+  }
+
+
+
+
+
+    ];
+
+    let currentIndex = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+    let skippedCount = 0;
+    let timer = 0;
+    let interval;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById('question');
+    const optionsEl = document.getElementById('options');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const timerEl = document.getElementById('timer');
+    const questionProgress = document.getElementById('questionProgress');
+
+    function startTimer() {
+      interval = setInterval(() => {
+        remainingTime--;
+        timer++;
+        const min = Math.floor(remainingTime / 60);
+        const sec = remainingTime % 60;
+        timerEl.innerText = `⏳ Time Left: ${min}m ${sec}s`;
+
+        if (remainingTime <= 0) {
+          clearInterval(interval);
+          submitQuiz();
+        }
+      }, 1000);
+    }
+
+    function loadQuestion() {
+      const current = questions[currentIndex];
+      questionEl.innerText = `Q${currentIndex + 1}: ${current.question}`;
+      questionProgress.innerText = `Question ${currentIndex + 1} / ${questions.length}`;
+      optionsEl.innerHTML = '';
+
+      current.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(btn, current.answer, opt);
+        optionsEl.appendChild(btn);
+      });
+
+      nextBtn.style.display = (currentIndex < questions.length - 1) ? 'inline-block' : 'none';
+      submitBtn.style.display = (currentIndex === questions.length - 1) ? 'inline-block' : 'none';
+    }
+
+    function selectOption(btn, correctAnswer, selected) {
+      const allBtns = optionsEl.querySelectorAll('button');
+      allBtns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.innerText === correctAnswer) b.classList.add('correct');
+      });
+
+      if (selected === correctAnswer) {
+        correctCount++;
+        btn.classList.add('correct');
+      } else {
+        wrongCount++;
+        btn.classList.add('wrong');
+      }
+
+      userAnswers[currentIndex] = selected;
+    }
+
+    function nextQuestion() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      currentIndex++;
+      if (currentIndex < questions.length) {
+        loadQuestion();
+      }
+    }
+
+    function calculateScore() {
+      const negative = wrongCount * 0.2;
+      const rawScore = correctCount - negative;
+      return rawScore < 0 ? 0 : rawScore;
+    }
+
+    function submitQuiz() {
+      const answered = optionsEl.querySelector('.correct, .wrong');
+      if (!answered && currentIndex === questions.length - 1) {
+        skippedCount++;
+        userAnswers[currentIndex] = null;
+      }
+
+      clearInterval(interval);
+      document.getElementById('quizBox').style.display = 'none';
+      document.getElementById('resultBox').style.display = 'block';
+
+      const score = calculateScore();
+      const percentage = (score / questions.length) * 100;
+      const status = percentage >= 40 ? "✅ Pass" : "❌ Fail";
+
+      document.getElementById('finalTime').innerHTML = `
+        <p>🟢 Correct: ${correctCount}</p>
+        <p>🔴 Wrong: ${wrongCount}</p>
+        <p>⚪ Skipped: ${skippedCount}</p>
+        <p>📊 Total Score: ${score.toFixed(2)} / ${questions.length}</p>
+        <p>🎯 Result: <strong>${status}</strong></p>
+        <p>⏱️ Time Taken: ${Math.floor(timer / 60)}m ${timer % 60}s</p>
+      `;
+
+      showResultChart();
+      showQuestionReview();
+    }
+
+ function showResultChart() {
+  const ctx = document.getElementById('resultChart').getContext('2d');
+  const total = correctCount + wrongCount + skippedCount;
+
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Correct', 'Wrong', 'Skipped'],
+      datasets: [{
+        data: [correctCount, wrongCount, skippedCount],
+        backgroundColor: [
+          'green',     // Green
+          'red',     // Red
+          'rgba(255, 193, 7, 1)'      // Yellow
+        ],
+        borderColor: '#f4f4f4',
+        borderWidth: 6,
+        borderRadius: 15,
+        hoverOffset: 10,
+        spacing: 5
+      }]
+    },
+    options: {
+      cutout: '40%',
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            boxWidth: 20,
+            padding: 15,
+            font: { size: 14 }
+          }
+        },
+        datalabels: {
+          color: '#000',
+          font: { weight: 'bold', size: 14 },
+          formatter: (value, ctx) => {
+            const data = ctx.chart.data.datasets[0].data;
+            const total = data.reduce((a, b) => a + b, 0);
+            return ((value / total) * 100).toFixed(1) + '%';
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
+    function showQuestionReview() {
+      const reviewContainer = document.createElement('div');
+      reviewContainer.innerHTML = `<h3>📝 Question Review</h3>`;
+      questions.forEach((q, index) => {
+        const userAns = userAnswers[index];
+        const correct = q.answer;
+
+        const qDiv = document.createElement('div');
+        qDiv.style.marginBottom = '20px';
+        qDiv.innerHTML = `<strong>Q${index + 1}:</strong> ${q.question}`;
+
+        q.options.forEach(opt => {
+          const optDiv = document.createElement('div');
+          optDiv.style.padding = '6px';
+          optDiv.style.borderRadius = '5px';
+          optDiv.style.margin = '4px 0';
+
+          if (opt === correct) {
+            optDiv.style.backgroundColor = '#d4edda';
+            optDiv.style.color = '#09da3a';
+          }
+
+          if (userAns === opt && opt !== correct) {
+            optDiv.style.backgroundColor = '#d1aaae';
+            optDiv.style.color = '#cf0d20';
+          }
+
+          optDiv.innerText = opt;
+          qDiv.appendChild(optDiv);
+        });
+
+        reviewContainer.appendChild(qDiv);
+      });
+
+      document.getElementById('resultBox').appendChild(reviewContainer);
+    }
+
+    // Initialize
+    startTimer();
+    loadQuestion();
+  </script>
+</body>
+</html>
